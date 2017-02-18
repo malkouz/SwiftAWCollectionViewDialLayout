@@ -25,12 +25,12 @@ class ViewController: UIViewController,UICollectionViewDataSource, UICollectionV
         super.viewDidLoad()
         
         type = 0
-        let jsonPath = NSBundle.mainBundle().pathForResource("photos", ofType: "json")
-        let jsonData = NSData(contentsOfFile: jsonPath!)
+        let jsonPath = Bundle.main.path(forResource: "photos", ofType: "json")
+        let jsonData = try? Data(contentsOf: URL(fileURLWithPath: jsonPath!))
         
         
         do{
-            self.items = try NSJSONSerialization.JSONObjectWithData(jsonData!, options: NSJSONReadingOptions(rawValue: 0)) as! [[String : String]]
+            self.items = try JSONSerialization.jsonObject(with: jsonData!, options: JSONSerialization.ReadingOptions(rawValue: 0)) as! [[String : String]]
             
             
             let radius = CGFloat(0.39 * 1000)
@@ -39,11 +39,11 @@ class ViewController: UIViewController,UICollectionViewDataSource, UICollectionV
             let cell_width = CGFloat(240)
             cell_height = 100
             print("Items :: ", self.items)
-            dialLayout = AWCollectionViewDialLayout(raduis: radius, angularSpacing: angularSpacing, cellSize: CGSizeMake(cell_width, cell_height) , alignment: WheelAlignmentType.CENTER, itemHeight: cell_height, xOffset: xOffset)
+            dialLayout = AWCollectionViewDialLayout(raduis: radius, angularSpacing: angularSpacing, cellSize: CGSize(width: cell_width, height: cell_height) , alignment: WheelAlignmentType.center, itemHeight: cell_height, xOffset: xOffset)
             dialLayout.shouldSnap = true
             dialLayout.shouldFlip = true
             collectionView.collectionViewLayout = dialLayout
-            dialLayout.scrollDirection = .Horizontal
+            dialLayout.scrollDirection = .horizontal
             
             self.switchExample()
         }catch let err{
@@ -66,16 +66,16 @@ class ViewController: UIViewController,UICollectionViewDataSource, UICollectionV
         var radius:CGFloat = 0 ,angularSpacing:CGFloat  = 0, xOffset:CGFloat = 0
         
         if(type == 0){
-            dialLayout.cellSize = CGSizeMake(340, 100)
-            dialLayout.wheelType = .LEFT
+            dialLayout.cellSize = CGSize(width: 340, height: 100)
+            dialLayout.wheelType = .left
             dialLayout.shouldFlip = false
             
             radius = 300
             angularSpacing = 18
             xOffset = 70
         }else if(type == 1){
-            dialLayout.cellSize = CGSizeMake(260, 50)
-            dialLayout.wheelType = .CENTER
+            dialLayout.cellSize = CGSize(width: 260, height: 50)
+            dialLayout.wheelType = .center
             dialLayout.shouldFlip = true
             
             radius = 320
@@ -91,24 +91,24 @@ class ViewController: UIViewController,UICollectionViewDataSource, UICollectionV
     }
     
     
-    override func prefersStatusBarHidden() -> Bool {
+    override var prefersStatusBarHidden : Bool {
         return true
     }
     
-    func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return self.items.count
     }
     
-    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
         return 1
     }
     
-    func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell:AWCollectionCell!
         if(type == 0){
-            cell = collectionView.dequeueReusableCellWithReuseIdentifier("Cell1", forIndexPath: indexPath) as! AWCollectionCell
+            cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell1", for: indexPath) as! AWCollectionCell
         }else{
-            cell = collectionView.dequeueReusableCellWithReuseIdentifier("Cell2", forIndexPath: indexPath) as! AWCollectionCell
+            cell = collectionView.dequeueReusableCell(withReuseIdentifier: "Cell2", for: indexPath) as! AWCollectionCell
         }
         
         let item = self.items[indexPath.item]
@@ -122,7 +122,7 @@ class ViewController: UIViewController,UICollectionViewDataSource, UICollectionV
             {
                 cell.icon.image = img
             }else{
-                dispatch_async(dispatch_get_main_queue()) {
+                DispatchQueue.main.async {
                     // update some UI
                     let img = UIImage(named: imgURL)
                     cell.icon.image = img
@@ -140,12 +140,12 @@ class ViewController: UIViewController,UICollectionViewDataSource, UICollectionV
         return cell
     }
     
-    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         print("Select Item :: ", indexPath.item)
         
        //collectionView.scrollToItemAtIndexPath(indexPath, atScrollPosition: UICollectionViewScrollPosition.Top, animated: true)
     }
-    @IBAction func changeLayoutType(sender: AnyObject) {
+    @IBAction func changeLayoutType(_ sender: AnyObject) {
         type = segType.selectedSegmentIndex
         print("TYPE :: ", type)
         switchExample()
