@@ -10,7 +10,7 @@ import UIKit
 
 
 enum WheelAlignmentType{
-    case LEFT, CENTER
+    case left, center
 }
 
 class AWCollectionViewDialLayout: UICollectionViewFlowLayout {
@@ -23,7 +23,7 @@ class AWCollectionViewDialLayout: UICollectionViewFlowLayout {
     var cellSize:CGSize!
     var angularSpacing:CGFloat!
     var dialRadius:CGFloat!
-    var currentIndexPath:NSIndexPath!
+    var currentIndexPath:IndexPath!
     
     var shouldSnap = false
     var shouldFlip = false
@@ -44,8 +44,8 @@ class AWCollectionViewDialLayout: UICollectionViewFlowLayout {
         self.minimumLineSpacing = 0
         self.itemHeight = itemHeight
         self.angularSpacing = angularSpacing
-        self.sectionInset = UIEdgeInsetsZero
-        self.scrollDirection = .Vertical
+        self.sectionInset = UIEdgeInsets.zero
+        self.scrollDirection = .vertical
         
         self.setup()
     }
@@ -58,22 +58,22 @@ class AWCollectionViewDialLayout: UICollectionViewFlowLayout {
         self.offset = 0.0;
     }
     
-    override func prepareLayout(){
-        super.prepareLayout()
-        if self.collectionView!.numberOfSections() > 0{
-            self.cellCount = self.collectionView?.numberOfItemsInSection(0)
+    override func prepare(){
+        super.prepare()
+        if self.collectionView!.numberOfSections > 0{
+            self.cellCount = self.collectionView?.numberOfItems(inSection: 0)
         }else{
             self.cellCount = 0
         }
         self.offset = -self.collectionView!.contentOffset.y / self.itemHeight
     }
     
-    override func shouldInvalidateLayoutForBoundsChange(newBounds: CGRect) -> Bool {
+    override func shouldInvalidateLayout(forBoundsChange newBounds: CGRect) -> Bool {
         return true
     }
     
     
-    func getRectForItem(itemIndex: Int) -> CGRect{
+    func getRectForItem(_ itemIndex: Int) -> CGRect{
         let newIndex =  CGFloat(itemIndex) + self.offset
         let scaleFactor = fmax(0.6, 1 - fabs( newIndex * 0.25))
         let deltaX = self.cellSize.width/2
@@ -93,13 +93,13 @@ class AWCollectionViewDialLayout: UICollectionViewFlowLayout {
             rX *= -1
         }
         
-        let itemFrame = CGRectMake(oX + CGFloat(rX), oY + CGFloat(rY), self.cellSize.width, self.cellSize.height)
+        let itemFrame = CGRect(x: oX + CGFloat(rX), y: oY + CGFloat(rY), width: self.cellSize.width, height: self.cellSize.height)
         
         return itemFrame
     }
     
     
-    override func layoutAttributesForElementsInRect(rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
+    override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
         var theLayoutAttributes = [UICollectionViewLayoutAttributes]()
         
         let maxVisiblesHalf:Int = 180 / Int(self.angularSpacing)
@@ -108,10 +108,10 @@ class AWCollectionViewDialLayout: UICollectionViewFlowLayout {
         for i in 0 ..< self.cellCount{
             let itemFrame = self.getRectForItem(i)
             
-            if(CGRectIntersectsRect(rect, itemFrame) && i > (-1 * Int(self.offset) - maxVisiblesHalf) && i < (-1 * Int(self.offset) + maxVisiblesHalf)){
+            if(rect.intersects(itemFrame) && i > (-1 * Int(self.offset) - maxVisiblesHalf) && i < (-1 * Int(self.offset) + maxVisiblesHalf)){
                 
-                let indexPath = NSIndexPath(forItem: i, inSection: 0)
-                let theAttributes = self.layoutAttributesForItemAtIndexPath(indexPath)
+                let indexPath = IndexPath(item: i, section: 0)
+                let theAttributes = self.layoutAttributesForItem(at: indexPath)
                 theLayoutAttributes.append(theAttributes!)
                 //lastIndex = i;
             }
@@ -120,7 +120,7 @@ class AWCollectionViewDialLayout: UICollectionViewFlowLayout {
         return theLayoutAttributes;
     }
     
-    override func targetContentOffsetForProposedContentOffset(proposedContentOffset: CGPoint, withScrollingVelocity velocity: CGPoint) -> CGPoint {
+    override func targetContentOffset(forProposedContentOffset proposedContentOffset: CGPoint, withScrollingVelocity velocity: CGPoint) -> CGPoint {
         if(shouldSnap){
             let index = Int(floor(proposedContentOffset.y / self.itemHeight))
             let off = (Int(proposedContentOffset.y) % Int(self.itemHeight))
@@ -132,25 +132,25 @@ class AWCollectionViewDialLayout: UICollectionViewFlowLayout {
                 targetY = (index+1) * height
             }
             
-            return CGPointMake(proposedContentOffset.x, CGFloat(targetY))
+            return CGPoint(x: proposedContentOffset.x, y: CGFloat(targetY))
         }else{
             return proposedContentOffset;
         }
     }
     
     
-    override func targetIndexPathForInteractivelyMovingItem(previousIndexPath: NSIndexPath, withPosition position: CGPoint) -> NSIndexPath {
-        return NSIndexPath(forItem: 0, inSection: 0)
+    override func targetIndexPath(forInteractivelyMovingItem previousIndexPath: IndexPath, withPosition position: CGPoint) -> IndexPath {
+        return IndexPath(item: 0, section: 0)
     }
     
-    override func collectionViewContentSize() -> CGSize {
+    override var collectionViewContentSize : CGSize {
         return CGSize(width: self.collectionView!.bounds.size.width, height: CGFloat(self.cellCount-1) * self.itemHeight + self.collectionView!.bounds.size.height)
     }
     
-    override func layoutAttributesForItemAtIndexPath(indexPath: NSIndexPath) -> UICollectionViewLayoutAttributes? {
+    override func layoutAttributesForItem(at indexPath: IndexPath) -> UICollectionViewLayoutAttributes? {
         let newIndex = CGFloat(indexPath.item) + self.offset
         
-        let theAttributes = UICollectionViewLayoutAttributes(forCellWithIndexPath: indexPath)
+        let theAttributes = UICollectionViewLayoutAttributes(forCellWith: indexPath)
         theAttributes.size = self.cellSize
         
         var scaleFactor:CGFloat
@@ -159,41 +159,41 @@ class AWCollectionViewDialLayout: UICollectionViewFlowLayout {
       
         
         let rotationValue = self.angularSpacing * newIndex * CGFloat(M_PI/180)
-        var rotationT = CGAffineTransformMakeRotation(rotationValue)
+        var rotationT = CGAffineTransform(rotationAngle: rotationValue)
         
         if(shouldFlip){
-            rotationT = CGAffineTransformMakeRotation(-rotationValue)
+            rotationT = CGAffineTransform(rotationAngle: -rotationValue)
         }
         
-        if( self.wheelType == .LEFT){
+        if( self.wheelType == .left){
             scaleFactor = fmax(0.6, 1 - fabs( CGFloat(newIndex) * 0.25))
             let newFrame = self.getRectForItem(indexPath.item)
-            theAttributes.frame = CGRectMake(newFrame.origin.x , newFrame.origin.y, newFrame.size.width, newFrame.size.height)
+            theAttributes.frame = CGRect(x: newFrame.origin.x , y: newFrame.origin.y, width: newFrame.size.width, height: newFrame.size.height)
             
-            translationT = CGAffineTransformMakeTranslation(0 , 0)
+            translationT = CGAffineTransform(translationX: 0 , y: 0)
         }else  {
             scaleFactor = fmax(0.4, 1 - fabs( CGFloat(newIndex) * 0.50))
             deltaX =  self.collectionView!.bounds.size.width / 2
             
             if(shouldFlip){
-                theAttributes.center = CGPointMake( self.collectionView!.frame.size.width + self.dialRadius - self.xOffset , self.collectionView!.bounds.size.height/2 + self.collectionView!.contentOffset.y)
+                theAttributes.center = CGPoint( x: self.collectionView!.frame.size.width + self.dialRadius - self.xOffset , y: self.collectionView!.bounds.size.height/2 + self.collectionView!.contentOffset.y)
                 
-                translationT = CGAffineTransformMakeTranslation( -1 * (self.dialRadius  + ((1 - scaleFactor) * -30)) , 0)
+                translationT = CGAffineTransform( translationX: -1 * (self.dialRadius  + ((1 - scaleFactor) * -30)) , y: 0)
                 print("should Flip ")
             }else{
-                theAttributes.center = CGPointMake(-self.dialRadius + self.xOffset , self.collectionView!.bounds.size.height/2 + self.collectionView!.contentOffset.y);
-                translationT = CGAffineTransformMakeTranslation(self.dialRadius  + ((1 - scaleFactor) * -30) , 0);
+                theAttributes.center = CGPoint(x: -self.dialRadius + self.xOffset , y: self.collectionView!.bounds.size.height/2 + self.collectionView!.contentOffset.y);
+                translationT = CGAffineTransform(translationX: self.dialRadius  + ((1 - scaleFactor) * -30) , y: 0);
                 print("should not Flip ")
             }
         }
         
         
         
-        let scaleT:CGAffineTransform = CGAffineTransformMakeScale(scaleFactor, scaleFactor)
+        let scaleT:CGAffineTransform = CGAffineTransform(scaleX: scaleFactor, y: scaleFactor)
         theAttributes.alpha = scaleFactor
-        theAttributes.hidden = false
+        theAttributes.isHidden = false
         
-        theAttributes.transform = CGAffineTransformConcat(scaleT, CGAffineTransformConcat(translationT, rotationT))
+        theAttributes.transform = scaleT.concatenating(translationT.concatenating(rotationT))
         
         return theAttributes 
 
